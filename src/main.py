@@ -1,6 +1,7 @@
 
 import pandas as pd
 
+from llm_analyzer import generate_ai_report
 from report_generator import generate_quality_report
 from missing_records import find_missing_records
 from duplicate_checker import find_duplicate_records
@@ -16,6 +17,7 @@ def main():
     print("=" * 55)
 
     # Step 1: Load source and target data
+
     source_df = pd.read_csv("data/source_data.csv")
     target_df = pd.read_csv("data/target_data.csv")
 
@@ -23,6 +25,7 @@ def main():
     print("Target Records:", len(target_df))
 
     # Step 2: Missing record detection
+
     print("\n1. MISSING RECORD VALIDATION")
 
     missing_df = find_missing_records(
@@ -35,6 +38,7 @@ def main():
     print("Total Missing Records:", len(missing_df))
 
     # Step 3: Duplicate detection
+
     print("\n2. DUPLICATE RECORD VALIDATION")
 
     duplicate_df = find_duplicate_records(
@@ -46,6 +50,7 @@ def main():
     print("Total Duplicate Rows:", len(duplicate_df))
 
     # Step 4: Schema validation
+
     print("\n3. SCHEMA VALIDATION")
 
     validate_schema(
@@ -54,11 +59,13 @@ def main():
     )
 
     # Step 5: Null value detection
+
     print("\n4. NULL VALUE VALIDATION")
 
     null_df = find_null_values(target_df)
 
     # Step 6: Extra record detection
+
     print("\n5. EXTRA RECORD VALIDATION")
 
     extra_df = find_extra_records(
@@ -67,15 +74,31 @@ def main():
         "TRX_ID"
     )
 
-    # Step 7: Generate Excel Report
+    # Step 7: Generate AI Analysis
+
+    print("\n6. AI DATA QUALITY ANALYSIS")
+
+    ai_report = generate_ai_report(
+        missing_count=len(missing_df),
+        duplicate_count=len(duplicate_df),
+        null_count=len(null_df),
+        extra_count=len(extra_df),
+        source_count=len(source_df),
+        target_count=len(target_df)
+    )
+
+    # Step 8: Generate Excel Report
+
     generate_quality_report(
         missing_df,
         duplicate_df,
         null_df,
-        extra_df
+        extra_df,
+        ai_report
     )
 
-    # Step 8: Final summary
+    # Step 9: Final summary
+
     print("\n" + "=" * 55)
     print("           DATA QUALITY SUMMARY")
     print("=" * 55)
