@@ -80,3 +80,73 @@ def generate_ai_report(
         print("\nUnexpected AI Error:", str(e))
 
         return f"AI analysis unavailable: {str(e)}"
+
+
+def chat_with_ai(question, quality_results, chat_history=None):
+
+    project_root = Path(__file__).resolve().parent.parent
+
+    load_dotenv(project_root / ".env")
+
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if not api_key:
+        return "AI chatbot unavailable: API key not found."
+
+    try:
+
+        client = OpenAI(api_key=api_key)
+
+        prompt = f"""
+        You are an expert Data Quality and Data Engineering AI Assistant.
+
+        Analyze the following actual validation results:
+
+        Missing Records: {len(quality_results['missing'])}
+        Duplicate Records: {len(quality_results['duplicate'])}
+        Null Records: {len(quality_results['null'])}
+        Extra Records: {len(quality_results['extra'])}
+
+        Schema Validation:
+        {quality_results['schema']}
+
+        User Question:
+        {question}
+
+        Instructions:
+        1. Answer based on the supplied validation results.
+        2. Explain possible root causes.
+        3. Suggest corrective actions.
+        4. Provide SQL or Python examples when requested.
+        5. Do not invent findings.
+        """
+
+        messages = [
+            {
+                "role": "system",
+                "content": "You are a professional Data Quality AI Assistant."
+            }
+        ]
+
+        if chat_history:
+            messages.extend(chat_history[-10:])
+
+        messages.append({
+            "role": "user",
+            "content": prompt
+        })
+
+        response = client.responses.create(
+            model="gpt-5.5",
+            input=messages
+        )
+
+        return response.output_text
+
+    except APIError as e:
+
+        return f"OpenAI API Error: {str(e)}"
+
+    except Exception as e:
+
+        return f"Unexpected AI Error: {str(e)}"

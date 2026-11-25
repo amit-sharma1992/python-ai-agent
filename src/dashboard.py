@@ -10,6 +10,7 @@ from duplicate_checker import find_duplicate_records
 from schema_validator import validate_schema
 from null_checker import find_null_values
 from extra_records import find_extra_records
+from llm_analyzer import chat_with_ai
 
 
 # Project paths
@@ -33,6 +34,11 @@ st.title("📊 AI Data Quality Dashboard")
 st.caption(
     "Automated Source-to-Target Data Quality Validation"
 )
+
+
+# Initialize chat history
+if "chat_history" not in st.session_state:
+    st.session_state["chat_history"] = []
 
 
 # Load data
@@ -84,6 +90,7 @@ if st.button("Run Data Quality Validation"):
             "TRX_ID"
         )
 
+        # Store validation results
         st.session_state["results"] = {
             "missing": missing_df,
             "duplicate": duplicate_df,
@@ -91,6 +98,9 @@ if st.button("Run Data Quality Validation"):
             "extra": extra_df,
             "schema": schema_result
         }
+
+        # Clear previous chat history
+        st.session_state["chat_history"] = []
 
     st.success("Data Quality Validation Completed!")
 
@@ -196,19 +206,82 @@ if "results" in st.session_state:
     ])
 
     with tab1:
-        st.dataframe(missing_df, use_container_width=True)
+        st.dataframe(
+            missing_df,
+            use_container_width=True
+        )
 
     with tab2:
-        st.dataframe(duplicate_df, use_container_width=True)
+        st.dataframe(
+            duplicate_df,
+            use_container_width=True
+        )
 
     with tab3:
-        st.dataframe(null_df, use_container_width=True)
+        st.dataframe(
+            null_df,
+            use_container_width=True
+        )
 
     with tab4:
-        st.dataframe(extra_df, use_container_width=True)
+        st.dataframe(
+            extra_df,
+            use_container_width=True
+        )
+
+    # AI Chatbot
+    st.divider()
+
+    st.subheader("🤖 AI Data Quality Assistant")
+
+    st.caption(
+        "Ask questions about missing records, duplicates, "
+        "null values, extra records and schema validation."
+    )
+
+    # Display previous conversations
+    for message in st.session_state["chat_history"]:
+
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Chat input
+    user_question = st.chat_input(
+        "Ask AI about your data quality issues..."
+    )
+
+    if user_question:
+
+        # Store user question
+        st.session_state["chat_history"].append({
+            "role": "user",
+            "content": user_question
+        })
+
+        with st.chat_message("user"):
+            st.markdown(user_question)
+
+        with st.chat_message("assistant"):
+
+            with st.spinner("AI is analysing your data..."):
+
+                ai_response = chat_with_ai(
+                    user_question,
+                    st.session_state["results"],
+                    st.session_state["chat_history"][:-1]
+                )
+
+                st.markdown(ai_response)
+
+        # Store AI response
+        st.session_state["chat_history"].append({
+            "role": "assistant",
+            "content": ai_response
+        })
 
 else:
 
     st.info(
-        "Click 'Run Data Quality Validation' to generate the dashboard."
+        "Click 'Run Data Quality Validation' "
+        "to generate the dashboard and enable AI chatbot."
     )
